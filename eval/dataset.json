@@ -1,0 +1,142 @@
+[
+  {
+    "question": "What architecture does the Transformer use instead of recurrence or convolution, and what is its core mechanism?",
+    "ground_truth": "The Transformer relies entirely on attention mechanisms (self-attention, multi-head attention) with no recurrence or convolutions.",
+    "expected_sources": [
+      "Attention Is All You Need.pdf"
+    ]
+  },
+  {
+    "question": "Why does the Transformer use multi-head attention?",
+    "ground_truth": "It lets the model jointly attend to information from different representation subspaces at different positions, which a single attention head would average away.",
+    "expected_sources": [
+      "Attention Is All You Need.pdf"
+    ]
+  },
+  {
+    "question": "What are the two pre-training tasks used by BERT?",
+    "ground_truth": "Masked language modeling (predicting randomly masked tokens) and next sentence prediction.",
+    "expected_sources": [
+      "BERT Pre-training of Deep Bidirectional Transformers for Language Understanding.pdf"
+    ]
+  },
+  {
+    "question": "What makes BERT 'deeply bidirectional' compared to earlier language models?",
+    "ground_truth": "BERT conditions on both left and right context in all layers, enabled by the masked language model objective, unlike left-to-right or shallowly concatenated models.",
+    "expected_sources": [
+      "BERT Pre-training of Deep Bidirectional Transformers for Language Understanding.pdf"
+    ]
+  },
+  {
+    "question": "What is chain-of-thought prompting?",
+    "ground_truth": "Prompting a large language model with examples that include intermediate reasoning steps, which improves performance on arithmetic, commonsense and symbolic reasoning tasks.",
+    "expected_sources": [
+      "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models.pdf"
+    ]
+  },
+  {
+    "question": "In the RAG paper, what are the two components combined in a retrieval-augmented generation model?",
+    "ground_truth": "A pre-trained parametric seq2seq generator and a non-parametric memory, a dense vector index of Wikipedia accessed by a neural retriever.",
+    "expected_sources": [
+      "Retrieval-Augmented Generation for Knowledge-Intensive NLP Task.pdf"
+    ]
+  },
+  {
+    "question": "What is the difference between RAG-Sequence and RAG-Token?",
+    "ground_truth": "RAG-Sequence uses the same retrieved document to generate the whole output sequence, while RAG-Token can use a different retrieved document for each generated token.",
+    "expected_sources": [
+      "Retrieval-Augmented Generation for Knowledge-Intensive NLP Task.pdf"
+    ]
+  },
+  {
+    "question": "How does Dense Passage Retrieval represent questions and passages?",
+    "ground_truth": "It uses two separate BERT encoders to embed questions and passages into dense vectors and ranks passages by dot-product similarity.",
+    "expected_sources": [
+      "Dense Passage Retrieval for Open-Domain Question Answering.pdf"
+    ]
+  },
+  {
+    "question": "What does Self-RAG add compared to standard RAG?",
+    "ground_truth": "It trains a language model to adaptively decide when to retrieve and to critique its own retrieved passages and generations using special reflection tokens.",
+    "expected_sources": [
+      "Self-RAG Learning to Retrieve, Generate, and Critique through Self-Reflection.pdf"
+    ]
+  },
+  {
+    "question": "What problem does LoRA solve and how?",
+    "ground_truth": "It makes fine-tuning large models cheaper by freezing the pretrained weights and training small injected low-rank decomposition matrices, greatly reducing trainable parameters.",
+    "expected_sources": [
+      "LoRA Low-Rank Adaptation of Large Language Models.pdf"
+    ]
+  },
+  {
+    "question": "What is the ReAct approach?",
+    "ground_truth": "ReAct interleaves reasoning traces and task-specific actions in language models, so reasoning guides actions and actions bring in external information.",
+    "expected_sources": [
+      "ReAct Synergizing Reasoning and Acting in Language Models.pdf"
+    ]
+  },
+  {
+    "question": "What does few-shot learning mean in the GPT-3 paper?",
+    "ground_truth": "The model is given a few task demonstrations in its context at inference time, with no gradient updates or fine-tuning.",
+    "expected_sources": [
+      "Language Models are Few-Shot Learners (GPT-3).pdf"
+    ]
+  },
+  {
+    "question": "How many parameters does the largest GPT-3 model have?",
+    "ground_truth": "175 billion parameters.",
+    "expected_sources": [
+      "Language Models are Few-Shot Learners (GPT-3).pdf"
+    ]
+  },
+  {
+    "question": "What range of model sizes does Llama 2 cover?",
+    "ground_truth": "Llama 2 models range from 7 billion to 70 billion parameters.",
+    "expected_sources": [
+      "Llama 2 Open Foundation and Fine-Tuned Chat Models.pdf"
+    ]
+  },
+  {
+    "question": "What technique does Llama 2-Chat use to align with human preferences?",
+    "ground_truth": "Supervised fine-tuning followed by reinforcement learning with human feedback (RLHF).",
+    "expected_sources": [
+      "Llama 2 Open Foundation and Fine-Tuned Chat Models.pdf"
+    ]
+  },
+  {
+    "question": "What key idea made ResNet able to train very deep networks?",
+    "ground_truth": "Residual learning with shortcut (identity skip) connections, where layers learn residual functions with reference to the layer inputs.",
+    "expected_sources": [
+      "Deep Residual Learning for Image Recognition (ResNet).pdf"
+    ]
+  },
+  {
+    "question": "How does DETR treat object detection?",
+    "ground_truth": "As a direct set prediction problem, using a transformer encoder-decoder with a bipartite matching loss, which removes hand-designed components like non-maximum suppression and anchors.",
+    "expected_sources": [
+      "End-to-End Object Detection with Transformers (DETR).pdf"
+    ]
+  },
+  {
+    "question": "How does YOLO frame object detection?",
+    "ground_truth": "As a single regression problem from image pixels to bounding box coordinates and class probabilities, in one network pass, which makes it real-time fast.",
+    "expected_sources": [
+      "You Only Look Once Unified, Real-Time Object Detection (YOLO).pdf"
+    ]
+  },
+  {
+    "question": "What was Whisper trained on and what does that give it?",
+    "ground_truth": "About 680,000 hours of weakly supervised multilingual and multitask audio-transcript data, giving robust zero-shot speech recognition without fine-tuning.",
+    "expected_sources": [
+      "Robust Speech Recognition via Large-Scale Weak Supervision (Whisper).pdf"
+    ]
+  },
+  {
+    "question": "How does wav2vec 2.0 learn speech representations?",
+    "ground_truth": "It masks parts of latent speech representations and solves a contrastive task over quantized targets, learning from unlabeled audio before fine-tuning on a little labeled data.",
+    "expected_sources": [
+      "wav2vec 2.0 A Framework for Self-Supervised Learning of Speech Representations.pdf"
+    ]
+  }
+]

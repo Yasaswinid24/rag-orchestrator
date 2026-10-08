@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Study Assistant</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --text:#1c2024; --muted:#6b7280; --accent:#2f6fed; --line:#e3e6ea; --user:#e8f0fe; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#16181c; --card:#1f2228; --text:#e8eaed; --muted:#9aa0a6; --accent:#6c9bff; --line:#2e323a; --user:#26334f; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .wrap { max-width:760px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column; padding:0 16px; }
+  header { padding:20px 0 10px; }
+  header h1 { margin:0; font-size:18px; }
+  header p { margin:2px 0 0; color:var(--muted); font-size:13px; }
+  #log { flex:1; display:flex; flex-direction:column; gap:12px; padding:8px 0 16px; }
+  .msg { padding:10px 14px; border-radius:12px; border:1px solid var(--line); background:var(--card); white-space:pre-wrap; word-wrap:break-word; }
+  .msg.user { background:var(--user); align-self:flex-end; max-width:85%; border-color:transparent; }
+  .msg.bot { align-self:flex-start; max-width:100%; }
+  .msg.err { border-color:#d93025; color:#d93025; }
+  .meta { margin-top:8px; font-size:12px; color:var(--muted); }
+  .badge { display:inline-block; padding:1px 8px; border-radius:999px; border:1px solid var(--line); margin-right:6px; }
+  .badge.ok { color:#188038; border-color:#188038; }
+  .badge.warn { color:#b06000; border-color:#b06000; }
+  details { margin-top:6px; }
+  summary { cursor:pointer; color:var(--accent); }
+  .src { margin:6px 0 0; padding-left:10px; border-left:3px solid var(--line); white-space:pre-wrap; }
+  form { position:sticky; bottom:0; background:var(--bg); padding:10px 0 18px; display:flex; gap:8px; }
+  input { flex:1; padding:12px 14px; font:inherit; color:var(--text); background:var(--card); border:1px solid var(--line); border-radius:10px; }
+  input:focus { outline:2px solid var(--accent); border-color:transparent; }
+  button { padding:0 18px; font:inherit; font-weight:600; color:#fff; background:var(--accent); border:0; border-radius:10px; cursor:pointer; }
+  button:disabled { opacity:.5; cursor:default; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>AI Study Assistant</h1>
+    <p>Ask questions about your indexed documents. Answers cite the sources they came from.</p>
+  </header>
+  <div id="log"></div>
+  <form id="form">
+    <input id="q" placeholder="Ask a question…" autocomplete="off" autofocus>
+    <button id="send" type="submit">Send</button>
+  </form>
+</div>
+<script>
+const log = document.getElementById("log");
+const form = document.getElementById("form");
+const input = document.getElementById("q");
+const send = document.getElementById("send");
+
+function add(cls, text) {
+  const d = document.createElement("div");
+  d.className = "msg " + cls;
+  d.textContent = text;
+  log.appendChild(d);
+  d.scrollIntoView({ block: "end" });
+  return d;
+}
+
+function addMeta(el, data) {
+  const meta = document.createElement("div");
+  meta.className = "meta";
+  const badge = document.createElement("span");
+  const chatOnly = (data.trace || []).includes("direct_answer");
+  badge.className = "badge " + (chatOnly ? "" : data.grounded ? "ok" : "warn");
+  badge.textContent = chatOnly ? "chat reply, no documents used"
+    : data.grounded ? "grounded in documents" : "not verified against documents";
+  meta.appendChild(badge);
+  el.appendChild(meta);
+
+  if (data.sources && data.sources.length) {
+    const det = document.createElement("details");
+    const sum = document.createElement("summary");
+    sum.textContent = data.sources.length + " source" + (data.sources.length > 1 ? "s" : "");
+    det.appendChild(sum);
+    data.sources.forEach((s) => {
+      const p = document.createElement("div");
+      p.className = "src";
+      p.textContent = s.source + " (chunk " + s.chunk_index + ")\n" + s.snippet + "…";
+      det.appendChild(p);
+    });
+    el.appendChild(det);
+  }
+  if (data.trace && data.trace.length) {
+    const det = document.createElement("details");
+    const sum = document.createElement("summary");
+    sum.textContent = "workflow steps";
+    det.appendChild(sum);
+    const p = document.createElement("div");
+    p.className = "src";
+    p.textContent = data.trace.join("\n");
+    det.appendChild(p);
+    el.appendChild(det);
+  }
+}
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const question = input.value.trim();
+  if (!question) return;
+  input.value = "";
+  add("user", question);
+  const pending = add("bot", "Thinking…");
+  send.disabled = true;
+  try {
+    const r = await fetch("/query", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question }),
+    });
+    if (!r.ok) throw new Error("Server error " + r.status + ". Check the uvicorn window for details.");
+    const data = await r.json();
+    pending.textContent = data.answer;
+    addMeta(pending, data);
+  } catch (err) {
+    pending.textContent = err.message;
+    pending.classList.add("err");
+  } finally {
+    send.disabled = false;
+    input.focus();
+  }
+});
+</script>
+</body>
+</html>
