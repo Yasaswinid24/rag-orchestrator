@@ -25,8 +25,14 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="RAG Generative AI Workflow Orchestrator", version="1.0.0", lifespan=lifespan)
 
 
+class Turn(BaseModel):
+    role: str
+    content: str
+
+
 class QueryRequest(BaseModel):
     question: str
+    history: list[Turn] = []     # optional earlier turns, gives the assistant conversation memory
 
 
 class Source(BaseModel):
@@ -69,7 +75,8 @@ async def ingest(file: UploadFile = File(...)):
 def query(req: QueryRequest):
     if not req.question.strip():
         raise HTTPException(400, "Question must not be empty")
-    result = state["graph"].invoke({"question": req.question, "trace": []})
+    history = [t.model_dump() for t in req.history[-6:]]
+    result = state["graph"].invoke({"question": req.question, "history": history, "trace": []})
     return QueryResponse(
         answer=result["generation"],
         grounded=result.get("grounded", False),

@@ -1,6 +1,6 @@
 """Agentic RAG workflow built with LangGraph.
 
-START -> route --(direct)--> direct_answer -> END
+START -> contextualize (only with chat history) -> route --(direct)--> direct_answer -> END
            |
            +--(retrieve)--> retrieve -> grade_documents
                                           |-- relevant docs --> generate -> check_grounding -> END
@@ -20,6 +20,7 @@ from app.llm import get_llm, invoke_structured
 
 class GraphState(TypedDict, total=False):
     question: str
+    history: list[dict]        # earlier turns: [{"role": "user"|"assistant", "content": "..."}]
     query: str                 # possibly rewritten query used for retrieval
     documents: list[Document]
     generation: str
@@ -64,6 +65,22 @@ def build_graph():
     llm = get_llm()
 
     # ---- nodes -------------------------------------------------------
+    def contextualize(state: GraphState) -> GraphState:
+        """Conversation memory: turn a follow-up ("what about its limits?") into a standalone question."""
+        history = state.get("history") or []
+        if not history:
+            return {"trace": _log(state, "contextualize(no history)")}
+        turns = "\n".join(f"{t['role']}: {str(t['content'])[:600]}" for t in history[-6:])
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", "Rewrite the user's latest message as one standalone question that can be understood "
+                       "without the conversation, resolving pronouns and references like 'it', 'that paper' or "
+                       "'what about X'. If it is already standalone, a greeting or small talk, return it "
+                       "unchanged. Return only the question."),
+            ("human", "Conversation so far:\n{turns}\n\nLatest message: {question}"),
+        ])
+        q = (prompt | llm).invoke({"turns": turns, "question": state["question"]}).content.strip() or state["question"]
+        return {"question": q, "trace": _log(state, f"contextualize -> {q!r}")}
+
     def route(state: GraphState) -> GraphState:
         prompt = ChatPromptTemplate.from_messages([
             ("system", "You route messages for a document question-answering assistant. Choose 'direct' ONLY for greetings, thanks, goodbyes or questions about the assistant itself. Choose 'retrieve' for every other question, including general-knowledge questions, so answers come from the documents."),
@@ -147,12 +164,13 @@ def build_graph():
         return "rewrite_query" if state.get("rewrites", 0) < s.max_rewrites else "generate"
 
     g = StateGraph(GraphState)
-    for name, fn in [("route", route), ("direct_answer", direct_answer), ("retrieve", retrieve),
+    for name, fn in [("contextualize", contextualize), ("route", route), ("direct_answer", direct_answer), ("retrieve", retrieve),
                      ("grade_documents", grade_documents), ("rewrite_query", rewrite_query),
                      ("generate", generate), ("check_grounding", check_grounding)]:
         g.add_node(name, fn)
 
-    g.add_edge(START, "route")
+    g.add_edge(START, "contextualize")
+    g.add_edge("contextualize", "route")
     g.add_conditional_edges("route", after_route, ["direct_answer", "retrieve"])
     g.add_edge("direct_answer", END)
     g.add_edge("retrieve", "grade_documents")
